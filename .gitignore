@@ -445,3 +445,4 @@ Thumbs.db
 # Keep configuration templates
 !config/*.template.*
 !k8s/*.template.yaml
+.kiro
