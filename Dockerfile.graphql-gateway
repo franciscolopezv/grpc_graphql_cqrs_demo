@@ -1,0 +1,26 @@
+# Apollo Router GraphQL Gateway Dockerfile
+FROM ghcr.io/apollographql/router:v1.33.0
+
+# Set working directory
+WORKDIR /app
+
+# Create directories for configuration
+RUN mkdir -p /etc/router
+
+# Copy configuration files
+COPY config/router.yaml /etc/router/router.yaml
+COPY config/supergraph.graphql /etc/router/supergraph.graphql
+
+# Set environment variables
+ENV APOLLO_ROUTER_SUPERGRAPH_PATH=/etc/router/supergraph.graphql
+ENV APOLLO_ROUTER_CONFIG_PATH=/etc/router/router.yaml
+
+# Expose the GraphQL Gateway port
+EXPOSE 4000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:4000/health || exit 1
+
+# Start the Apollo Router
+CMD ["./router", "--config", "/etc/router/router.yaml", "--supergraph", "/etc/router/supergraph.graphql"]

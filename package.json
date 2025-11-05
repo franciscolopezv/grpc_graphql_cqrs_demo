@@ -1,0 +1,28 @@
+{
+  "name": "platform-infrastructure-tests",
+  "version": "1.0.0",
+  "description": "Integration tests for platform infrastructure",
+  "scripts": {
+    "test": "jest --runInBand --verbose",
+    "test:watch": "jest --watch --runInBand",
+    "test:docker": "jest --testPathPattern=docker --runInBand --verbose",
+    "test:graphql": "jest --testPathPattern=graphql --runInBand --verbose"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.8",
+    "axios": "^1.6.2",
+    "dockerode": "^4.0.0",
+    "kafkajs": "^2.2.4",
+    "pg": "^8.11.3",
+    "express": "^4.18.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 60000,
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  }
+}

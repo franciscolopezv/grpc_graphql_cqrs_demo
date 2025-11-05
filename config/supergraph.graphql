@@ -1,0 +1,52 @@
+# Initial supergraph schema - will be updated by Apollo Router when subgraphs are available
+schema
+  @link(url: "https://specs.apollo.dev/link/v1.0")
+  @link(url: "https://specs.apollo.dev/join/v0.3", for: EXECUTION)
+{
+  query: Query
+}
+
+directive @join__enumValue(graph: join__Graph!) on ENUM_VALUE
+
+directive @join__field(graph: join__Graph, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
+
+directive @join__implements(graph: join__Graph!, interface: String!) on OBJECT | INTERFACE
+
+directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true, isInterfaceObject: Boolean! = false) on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+
+directive @join__unionMember(graph: join__Graph!, member: String!) on UNION
+
+directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) on SCHEMA
+
+scalar join__FieldSet
+
+enum join__Graph {
+  PRODUCTS @join__graph(name: "products", url: "http://products-service:8081/graphql")
+  RATINGS @join__graph(name: "ratings", url: "http://ratings-service:8082/graphql")
+}
+
+scalar link__Import
+
+enum link__Purpose {
+  """
+  `SECURITY` features provide metadata necessary to securely resolve fields.
+  """
+  SECURITY
+
+  """
+  `EXECUTION` features provide metadata necessary for operation execution.
+  """
+  EXECUTION
+}
+
+# Placeholder query type - will be replaced when subgraphs are composed
+type Query {
+  _service: _Service
+}
+
+# Apollo Federation service type
+type _Service {
+  sdl: String
+}
