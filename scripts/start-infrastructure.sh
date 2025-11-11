@@ -280,7 +280,7 @@ check_service_health() {
         
         # Wait for PostgreSQL
         wait_for_service "PostgreSQL" \
-            "$compose_cmd -f $COMPOSE_FILE exec -T postgres pg_isready -U \${POSTGRES_USER:-platform_user}" \
+            "$compose_cmd -f $COMPOSE_FILE exec -T postgres pg_isready -U \${POSTGRES_USER:-postgres}" \
             60
         
         # Wait for Zookeeper
@@ -329,7 +329,7 @@ show_service_urls() {
     echo "🗄️  PostgreSQL Database:"
     echo "   Host: localhost"
     echo "   Port: ${POSTGRES_PORT:-5432}"
-    echo "   User: ${POSTGRES_USER:-platform_user}"
+    echo "   User: ${POSTGRES_USER:-postgres}"
     echo "   Databases: ${POSTGRES_MULTIPLE_DATABASES:-products_db,ratings_db,platform_db}"
     echo ""
     echo "📨 Kafka Message Bus:"

@@ -274,7 +274,7 @@ describe('Docker Compose Orchestration', () => {
           execCommand('docker exec kafka kafka-broker-api-versions --bootstrap-server localhost:9092');
           
           // Check PostgreSQL health
-          execCommand('docker exec postgres pg_isready -U platform_user');
+          execCommand('docker exec postgres pg_isready -U postgres');
           
           // Check GraphQL Gateway health
           const response = await axios.get(testConfig.services.graphqlGateway.healthUrl, {

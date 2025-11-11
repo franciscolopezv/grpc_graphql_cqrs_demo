@@ -18,8 +18,8 @@ global.testConfig = {
     postgres: {
       host: 'localhost',
       port: 5432,
-      user: 'platform_user',
-      password: 'platform_password',
+      user: 'postgres',
+      password: 'postgres',
       databases: ['products_db', 'ratings_db', 'platform_db']
     },
     kafka: {

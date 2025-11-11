@@ -1,0 +1,70 @@
+# Template docker-compose.yml for individual services
+# Copy this to your service repositories and customize as needed
+
+version: '3.8'
+
+services:
+  # Example: Products Service
+  products-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: products-service
+    hostname: products-service
+    ports:
+      - "8081:8081"  # Expose port for external access
+    environment:
+      # Service configuration
+      PORT: 8081
+      NODE_ENV: development
+      
+      # Database connection (using shared PostgreSQL)
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/products_db
+      
+      # Kafka connection (using shared Kafka)
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_CLIENT_ID: products-service
+      
+      # GraphQL Federation
+      GRAPHQL_ENDPOINT: /graphql
+      SERVICE_NAME: products
+      
+      # Health check endpoint
+      HEALTH_ENDPOINT: /health
+      
+      # Logging
+      LOG_LEVEL: info
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Optional: Mount source code for development
+    volumes:
+      - .:/app
+      - /app/node_modules  # Prevent overwriting node_modules
+    
+    # Optional: Development command override
+    # command: npm run dev
+    
+    # IMPORTANT: Assign service to the shared network
+    networks:
+      - platform-infrastructure
+
+# IMPORTANT: Use the shared network created by platform infrastructure
+networks:
+  platform-infrastructure:
+    name: platform-infrastructure
+    external: true
+
+# Optional: Service-specific volumes
+volumes:
+  products-data:
+    driver: local

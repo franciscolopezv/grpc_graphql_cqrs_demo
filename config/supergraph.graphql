@@ -1,4 +1,3 @@
-# Initial supergraph schema - will be updated by Apollo Router when subgraphs are available
 schema
   @link(url: "https://specs.apollo.dev/link/v1.0")
   @link(url: "https://specs.apollo.dev/join/v0.3", for: EXECUTION)
@@ -6,25 +5,25 @@ schema
   query: Query
 }
 
-directive @join__enumValue(graph: join__Graph!) on ENUM_VALUE
+directive @join__enumValue(graph: join__Graph!) repeatable on ENUM_VALUE
 
-directive @join__field(graph: join__Graph, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+directive @join__field(graph: join__Graph, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 directive @join__graph(name: String!, url: String!) on ENUM_VALUE
 
-directive @join__implements(graph: join__Graph!, interface: String!) on OBJECT | INTERFACE
+directive @join__implements(graph: join__Graph!, interface: String!) repeatable on OBJECT | INTERFACE
 
-directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true, isInterfaceObject: Boolean! = false) on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true, isInterfaceObject: Boolean! = false) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
 
-directive @join__unionMember(graph: join__Graph!, member: String!) on UNION
+directive @join__unionMember(graph: join__Graph!, member: String!) repeatable on UNION
 
-directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) on SCHEMA
+directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) repeatable on SCHEMA
 
 scalar join__FieldSet
 
 enum join__Graph {
-  PRODUCTS @join__graph(name: "products", url: "http://products-service:8081/graphql")
-  RATINGS @join__graph(name: "ratings", url: "http://ratings-service:8082/graphql")
+  PRODUCTS @join__graph(name: "products", url: "http://products-query-service:4000/graphql")
+  RATINGS @join__graph(name: "ratings", url: "http://ratings-query-service:8082/graphql")
 }
 
 scalar link__Import
@@ -41,12 +40,59 @@ enum link__Purpose {
   EXECUTION
 }
 
-# Placeholder query type - will be replaced when subgraphs are composed
-type Query {
-  _service: _Service
+type OverallRatingStats
+  @join__type(graph: RATINGS)
+{
+  totalProducts: Int!
+  totalReviews: Int!
+  overallAverageRating: Float
+  productsWithRatings: Int!
 }
 
-# Apollo Federation service type
-type _Service {
-  sdl: String
+type Product
+  @join__type(graph: PRODUCTS, key: "id")
+  @join__type(graph: RATINGS, key: "id")
+{
+  id: ID!
+  name: String @join__field(graph: PRODUCTS)
+  description: String @join__field(graph: PRODUCTS)
+  averageRating: Float @join__field(graph: RATINGS)
+  reviewCount: Int @join__field(graph: RATINGS)
+  ratingDistribution: RatingDistribution @join__field(graph: RATINGS)
+}
+
+type ProductRatingStats
+  @join__type(graph: RATINGS)
+{
+  productId: ID!
+  averageRating: Float
+  reviewCount: Int!
+  ratingDistribution: RatingDistribution
+  lastUpdated: String
+}
+
+type Query
+  @join__type(graph: PRODUCTS)
+  @join__type(graph: RATINGS)
+{
+  product(id: ID!): Product
+  productRatingStats(productId: ID!): ProductRatingStats @join__field(graph: RATINGS)
+  topRatedProducts(limit: Int = 10): [ProductRatingStats!]! @join__field(graph: RATINGS)
+  mostReviewedProducts(limit: Int = 10): [ProductRatingStats!]! @join__field(graph: RATINGS)
+  overallRatingStats: OverallRatingStats @join__field(graph: RATINGS)
+}
+
+type RatingDistribution
+  @join__type(graph: RATINGS)
+{
+  oneStar: Int!
+  twoStar: Int!
+  threeStar: Int!
+  fourStar: Int!
+  fiveStar: Int!
+  total: Int!
+  mostCommonRating: Int
+  hasPositiveRatings: Boolean!
+  hasNegativeRatings: Boolean!
+  diversityScore: Float
 }

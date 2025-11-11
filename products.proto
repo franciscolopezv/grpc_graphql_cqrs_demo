@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package products;
+
+service ProductsCommandService {
+  rpc CreateProduct (CreateProductCommand) returns (CreateProductResponse);
+}
+
+message CreateProductCommand {
+  string name = 1;
+  string description = 2;
+}
+
+message CreateProductResponse {
+  string product_id = 1;
+  string status = 2;
+}

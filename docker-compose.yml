@@ -17,6 +17,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - platform-infrastructure
 
   # Kafka - Message bus for inter-service communication
   kafka:
@@ -48,6 +50,24 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - platform-infrastructure
+
+  # Kafka UI for development
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: ratings-kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - platform-infrastructure
 
   # PostgreSQL - Shared database service
   postgres:
@@ -64,16 +84,16 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./scripts/create-multiple-databases.sh:/docker-entrypoint-initdb.d/create-multiple-databases.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-platform_user}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - platform-infrastructure
 
   # GraphQL Gateway - Apollo Router for schema composition
   graphql-gateway:
-    build:
-      context: .
-      dockerfile: Dockerfile.graphql-gateway
+    image: ghcr.io/apollographql/router:v1.33.0
     hostname: graphql-gateway
     container_name: graphql-gateway
     depends_on:
@@ -85,14 +105,11 @@ services:
       - "${GRAPHQL_GATEWAY_PORT:-4000}:4000"
     environment:
       APOLLO_ROUTER_SUPERGRAPH_PATH: /etc/router/supergraph.graphql
-      APOLLO_ROUTER_CONFIG_PATH: /etc/router/router.yaml
-      PRODUCTS_SERVICE_URL: ${PRODUCTS_SERVICE_URL:-http://products-service:8081}
-      RATINGS_SERVICE_URL: ${RATINGS_SERVICE_URL:-http://ratings-service:8082}
-      # Logging configuration
-      APOLLO_ROUTER_LOG: info
-      RUST_LOG: info
+      PRODUCTS_SERVICE_URL: ${PRODUCTS_SERVICE_URL:-http://products-query-service:4001}
+      RATINGS_SERVICE_URL: ${RATINGS_SERVICE_URL:-http://ratings-query-service:8083}
+      APOLLO_ROUTER_LOG: debug
+      RUST_LOG: debug
     volumes:
-      - ./config/router.yaml:/etc/router/router.yaml:ro
       - ./config/supergraph.graphql:/etc/router/supergraph.graphql:ro
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
@@ -100,6 +117,8 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    networks:
+      - platform-infrastructure
 
 # Persistent volumes for data storage
 volumes:
@@ -114,6 +133,7 @@ volumes:
 
 # Network configuration
 networks:
-  default:
+  platform-infrastructure:
     name: platform-infrastructure
     driver: bridge
+    external: true

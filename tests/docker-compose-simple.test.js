@@ -163,7 +163,7 @@ describe('Docker Compose Basic Services', () => {
           execCommand('docker exec kafka kafka-broker-api-versions --bootstrap-server localhost:9092');
           
           // Check PostgreSQL health
-          execCommand('docker exec postgres pg_isready -U platform_user');
+          execCommand('docker exec postgres pg_isready -U postgres');
           
           return true;
         } catch (error) {
@@ -174,7 +174,7 @@ describe('Docker Compose Basic Services', () => {
       // Verify individual health checks pass
       expect(() => execCommand('docker exec zookeeper nc -z localhost 2181')).not.toThrow();
       expect(() => execCommand('docker exec kafka kafka-broker-api-versions --bootstrap-server localhost:9092')).not.toThrow();
-      expect(() => execCommand('docker exec postgres pg_isready -U platform_user')).not.toThrow();
+      expect(() => execCommand('docker exec postgres pg_isready -U postgres')).not.toThrow();
     });
   });
 });

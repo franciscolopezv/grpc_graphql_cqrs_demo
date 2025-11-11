@@ -58,16 +58,45 @@ The GraphQL Gateway provides a unified API endpoint that composes multiple domai
 
 ### Quick Start for New Services
 
-1. **Use the Registration Script**:
+1. **Setup Shared Network** (One-time setup):
    ```bash
-   ./scripts/register-service.sh inventory http://inventory-service:8083 8083
+   ./scripts/setup-network.sh
    ```
 
-2. **Manual Registration**:
-   - Implement Federation in your GraphQL service
-   - Add service URL to environment configuration
-   - Update router configuration
-   - Deploy and test
+2. **Start Platform Infrastructure**:
+   ```bash
+   docker compose up -d
+   ```
+
+3. **In Your Service Repository**, create docker-compose.yml:
+   ```yaml
+   version: '3.8'
+   services:
+     your-service:
+       build: .
+       container_name: your-service
+       ports:
+         - "8080:8080"
+       environment:
+         DATABASE_URL: postgresql://postgres:postgres@postgres:5432/your_db
+         KAFKA_BROKERS: kafka:29092
+   
+   networks:
+     default:
+       name: platform-infrastructure
+       external: true
+   ```
+
+4. **Start Your Service**:
+   ```bash
+   docker compose up -d
+   ```
+
+5. **Register with Gateway**:
+   ```bash
+   # In platform infrastructure repo
+   ./scripts/register-service.sh your-service http://your-service:8080
+   ```
 
 ### Federation Requirements
 

@@ -17,8 +17,8 @@ The PostgreSQL service creates the following databases by default:
 
 **Host**: `postgres` (within Docker network) or `localhost` (from host machine)
 **Port**: `5432` (default, configurable via `POSTGRES_PORT`)
-**Username**: `platform_user` (configurable via `POSTGRES_USER`)
-**Password**: `platform_password` (configurable via `POSTGRES_PASSWORD`)
+**Username**: `postgres` (configurable via `POSTGRES_USER`)
+**Password**: `postgres` (configurable via `POSTGRES_PASSWORD`)
 
 ### Environment Variables
 
@@ -26,8 +26,8 @@ The following environment variables control the PostgreSQL configuration:
 
 ```bash
 # Database credentials
-POSTGRES_USER=platform_user
-POSTGRES_PASSWORD=platform_password
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
 
@@ -47,7 +47,7 @@ services:
   your-service:
     image: your-app:latest
     environment:
-      DATABASE_URL: postgresql://platform_user:platform_password@postgres:5432/products_db
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/products_db
     depends_on:
       postgres:
         condition: service_healthy
@@ -57,17 +57,17 @@ services:
 
 **Products Service Connection**:
 ```
-postgresql://platform_user:platform_password@postgres:5432/products_db
+postgresql://postgres:postgres@postgres:5432/products_db
 ```
 
 **Ratings Service Connection**:
 ```
-postgresql://platform_user:platform_password@postgres:5432/ratings_db
+postgresql://postgres:postgres@postgres:5432/ratings_db
 ```
 
 **Platform Service Connection**:
 ```
-postgresql://platform_user:platform_password@postgres:5432/platform_db
+postgresql://postgres:postgres@postgres:5432/platform_db
 ```
 
 ### Host Machine Connections
@@ -76,10 +76,10 @@ For development tools or applications running on the host machine:
 
 ```bash
 # Connection string for host machine access
-postgresql://platform_user:platform_password@localhost:5432/products_db
+postgresql://postgres:postgres@localhost:5432/products_db
 
 # Using psql from host machine
-psql -h localhost -p 5432 -U platform_user -d products_db
+psql -h localhost -p 5432 -U postgres -d products_db
 ```
 
 ## Database Creation and Migration Workflows
@@ -103,7 +103,7 @@ To add a new database for a domain team:
 3. **Verify Database Creation**:
    ```bash
    # Connect and list databases
-   docker-compose exec postgres psql -U platform_user -c "\l"
+   docker-compose exec postgres psql -U postgres -c "\l"
    ```
 
 ### Schema Migration Best Practices
@@ -155,7 +155,7 @@ COMMIT;
 docker cp ./migrations/001_initial_schema.sql postgres:/tmp/
 
 # Execute migration
-docker-compose exec postgres psql -U platform_user -d products_db -f /tmp/001_initial_schema.sql
+docker-compose exec postgres psql -U postgres -d products_db -f /tmp/001_initial_schema.sql
 ```
 
 **Option 2: Using Volume Mount**
@@ -168,11 +168,11 @@ services:
     command: |
       sh -c "
         # Wait for database to be ready
-        until pg_isready -h postgres -p 5432 -U platform_user; do sleep 1; done
+        until pg_isready -h postgres -p 5432 -U postgres; do sleep 1; done
         
         # Run migrations
         for migration in /app/migrations/*.sql; do
-          psql postgresql://platform_user:platform_password@postgres:5432/products_db -f $$migration
+          psql postgresql://postgres:postgres@postgres:5432/products_db -f $$migration
         done
         
         # Start your application
@@ -200,20 +200,20 @@ INSERT INTO schema_migrations (version) VALUES ('001_initial_schema') ON CONFLIC
 
 ```bash
 # Backup specific database
-docker-compose exec postgres pg_dump -U platform_user products_db > products_db_backup.sql
+docker-compose exec postgres pg_dump -U postgres products_db > products_db_backup.sql
 
 # Backup all databases
-docker-compose exec postgres pg_dumpall -U platform_user > all_databases_backup.sql
+docker-compose exec postgres pg_dumpall -U postgres > all_databases_backup.sql
 ```
 
 #### Restoring from Backup
 
 ```bash
 # Restore specific database
-docker-compose exec -T postgres psql -U platform_user products_db < products_db_backup.sql
+docker-compose exec -T postgres psql -U postgres products_db < products_db_backup.sql
 
 # Restore all databases
-docker-compose exec -T postgres psql -U platform_user < all_databases_backup.sql
+docker-compose exec -T postgres psql -U postgres < all_databases_backup.sql
 ```
 
 ## Connection Pooling
@@ -228,8 +228,8 @@ services:
     environment:
       DATABASES_HOST: postgres
       DATABASES_PORT: 5432
-      DATABASES_USER: platform_user
-      DATABASES_PASSWORD: platform_password
+      DATABASES_USER: postgres
+      DATABASES_PASSWORD: postgres
       DATABASES_DBNAME: products_db
       POOL_MODE: transaction
       MAX_CLIENT_CONN: 100
@@ -249,7 +249,7 @@ The PostgreSQL service includes a health check that verifies the database is rea
 
 ```yaml
 healthcheck:
-  test: ["CMD-SHELL", "pg_isready -U platform_user"]
+  test: ["CMD-SHELL", "pg_isready -U postgres"]
   interval: 30s
   timeout: 10s
   retries: 3
@@ -265,13 +265,13 @@ docker-compose ps postgres
 docker-compose logs postgres
 
 # Connect and check database status
-docker-compose exec postgres psql -U platform_user -c "SELECT version();"
+docker-compose exec postgres psql -U postgres -c "SELECT version();"
 
 # List all databases
-docker-compose exec postgres psql -U platform_user -c "\l"
+docker-compose exec postgres psql -U postgres -c "\l"
 
 # Check active connections
-docker-compose exec postgres psql -U platform_user -c "SELECT * FROM pg_stat_activity;"
+docker-compose exec postgres psql -U postgres -c "SELECT * FROM pg_stat_activity;"
 ```
 
 ## Security Considerations
@@ -316,13 +316,13 @@ docker-compose restart postgres
 docker-compose exec postgres env | grep POSTGRES
 
 # Check user exists
-docker-compose exec postgres psql -U platform_user -c "\du"
+docker-compose exec postgres psql -U postgres -c "\du"
 ```
 
 #### 3. Database Does Not Exist
 ```bash
 # List available databases
-docker-compose exec postgres psql -U platform_user -c "\l"
+docker-compose exec postgres psql -U postgres -c "\l"
 
 # Recreate databases
 docker-compose down postgres
@@ -332,10 +332,10 @@ docker-compose up -d postgres
 #### 4. Permission Denied
 ```bash
 # Check database permissions
-docker-compose exec postgres psql -U platform_user -d products_db -c "\dp"
+docker-compose exec postgres psql -U postgres -d products_db -c "\dp"
 
 # Grant necessary permissions
-docker-compose exec postgres psql -U platform_user -c "GRANT ALL PRIVILEGES ON DATABASE products_db TO platform_user;"
+docker-compose exec postgres psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE products_db TO postgres;"
 ```
 
 ## Performance Optimization
@@ -372,7 +372,7 @@ environment:
 
 1. **Check Service Status**: `docker-compose ps postgres`
 2. **View Logs**: `docker-compose logs postgres`
-3. **Database Console**: `docker-compose exec postgres psql -U platform_user`
+3. **Database Console**: `docker-compose exec postgres psql -U postgres`
 
 ### Additional Resources
 

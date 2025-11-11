@@ -331,7 +331,7 @@ services:
       - "8083:8083"
     environment:
       PORT: 8083
-      DATABASE_URL: postgresql://platform_user:platform_password@postgres:5432/inventory_db
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/inventory_db
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/health"]
       interval: 30s
